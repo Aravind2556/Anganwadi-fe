@@ -1,7 +1,6 @@
 import React, { useContext } from "react";
-
 import { DContext } from "../context/Datacontext";
-import Logo from '../assets/Anganwadi_logo-removebg-preview.png'
+
 
 const Navbar = () => {
  
@@ -30,13 +29,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-green-700 shadow-md sticky top-0 z-50">
+    <nav className="bg-stone-600 shadow-md sticky w-full top-0 z-50">
       <div className="container mx-auto flex items-center justify-between py-4 px-6">
         {/* Logo */}
-        {/* <a href="/" className="text-xl font-bold text-primar text-white ">
-        courtyard shelter
-        </a> */}
-        <img src={Logo} alt="loading.." className="w-20 h-20" ></img>
+        <a href="/" className="text-xl font-bold text-primar text-white ">
+        Anganwadi
+        </a>
+        {/* <img src={Logo} alt="loading.." className="w-20 h-20" ></img> */}
 
         {/* Auth Button */}
         <button

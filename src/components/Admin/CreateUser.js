@@ -1,9 +1,12 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import PowermangeUser from "../../assets/depositphotos_69635005-stock-illustration-child-care-logo-template-removebg-preview.png";
 import { Eye, EyeOff } from "lucide-react";
+import { DContext } from "../../context/Datacontext";
+
 
 export const CreateUser = () => {
   const apiurl = process.env.REACT_APP_API_URL;
+  const {Auth}=useContext(DContext)
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Separate state
 
@@ -18,6 +21,8 @@ export const CreateUser = () => {
     userType: "user",
   });
 
+
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -26,19 +31,23 @@ export const CreateUser = () => {
   const handleRegister = (e) => {
     e.preventDefault();
 
+    if(formData.password !== formData.confirmPassword){
+      alert("passwords do not match")
+    }
+
     if (formData) {
       fetch(`${apiurl}/register-student`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ fullname : formData.fullname , email : formData.email , contact : formData.contact , password : formData.contact , Dob : formData.Dob , address : formData.address , userType : formData.userType , Angenid : Auth.Angenid}),
       })
         .then((res) => res.json())
         .then((data) => {
           alert(data.message);
 
           if (data.success === true) {
-            window.location.href = "/";
+            window.location.href = "/adminDashboard";
           }
         })
         .catch((err) => {
@@ -50,9 +59,14 @@ export const CreateUser = () => {
     }
   };
 
+
+
   return (
-    <div className="flex items-center h-screen sticky w-screen justify-center min-h-screen bg-gray-100 p-4">
-      <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
+    <>
+
+    <div className="flex items-center h-screen  w-screen justify-center min-h-screen bg-gray-100 p-4">
+
+      <div className="flex flex-col md:flex-row bg-stone-300 shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
         {/* Image Section */}
         <div className="hidden md:flex md:w-1/2 p-6 justify-center items-center">
           <img
@@ -63,7 +77,7 @@ export const CreateUser = () => {
         </div>
 
         {/* Form Section */}
-        <div className="md:w-1/2 p-6 flex flex-col justify-center w-full">
+        <div className="md:w-1/2  p-6 flex flex-col justify-center w-full">
           <h2 className="text-2xl font-semibold text-center mb-6">Create User</h2>
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
@@ -179,17 +193,11 @@ export const CreateUser = () => {
             </button>
           </form>
 
-          <div className="text-center mt-4">
-            <p>
-              Already have an account?{' '}
-              <a href="/" className="text-blue-500 hover:underline">
-                Go to login
-              </a>
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
+    </>
   );
 };
 

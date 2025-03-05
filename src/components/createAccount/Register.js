@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import PowermangeUser from "../../assets/Register.png";
+import PowermangeUser from "../../assets/download__1_-removebg-preview.png";
 import { Eye, EyeOff } from "lucide-react";
 
 export const Register = () => {
@@ -49,8 +49,8 @@ export const Register = () => {
   };
 
   return (
-    <div className="flex items-center h-screen sticky w-screen justify-center min-h-screen bg-gray-100 p-4">
-      <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
+    <div className="flex absolute inset-0 items-center h-screen  w-screen justify-center min-h-screen bg-gray-100 p-4">
+      <div className="flex flex-col md:flex-row bg-stone-300 shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
         {/* Image Section */}
         <div className="hidden md:flex md:w-1/2 p-6 justify-center items-center">
           <img

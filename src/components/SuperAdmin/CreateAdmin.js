@@ -41,7 +41,7 @@ export const CreateAdmin = () => {
         })
         .catch((err) => {
           console.log("Error", err);
-          alert("Catch error");
+          
         });
     } else {
       alert("Data value not declared");
@@ -49,8 +49,8 @@ export const CreateAdmin = () => {
   };
 
   return (
-    <div className="flex items-center h-screen sticky w-screen justify-center min-h-screen bg-gray-100 p-4">
-      <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
+    <div className="flex items-center absolute inset-0 h-screen  w-screen justify-center min-h-screen bg-gray-100 p-4">
+      <div className="flex flex-col md:flex-row bg-stone-300 shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
         {/* Image Section */}
         <div className="hidden md:flex md:w-1/2 p-6 justify-center items-center">
           <img

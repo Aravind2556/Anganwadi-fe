@@ -7,7 +7,7 @@ export const Login = () => {
   const apiurl = process.env.REACT_APP_API_URL;
   const { setAuth } = useContext(DContext);
   const [display, setDisplay] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false); 
 
   const [formData, setFormData] = useState({
     email: "",
@@ -37,7 +37,8 @@ export const Login = () => {
         if (data.success) {
           setDisplay(data.message);
           setAuth(data.user);
-          console.log("auth user",data.user)
+          handleRole(data.user)
+        
         } else {
           setDisplay(data.message);
         }
@@ -47,16 +48,29 @@ export const Login = () => {
       });
   };
 
+
+
+  const handleRole = (role) =>{
+    console.log(role.role)
+    if(role.role === 'admin'){
+      window.location.href='/adminDashboard'
+    }
+  }
+
+  const handleRegisterSuperAdmin = () => {
+    window.location.href='/Register'
+  }
+
   return (
    
-    <div className="flex items-center justify-center h-screen w-screen bg-green-100 p-4 sm:p-6 md:p-8 lg:p-10">
-      <div className="flex flex-col md:flex-row bg-white shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
+    <div className="flex absolute inset-0 items-center justify-center h-screen w-screen   p-4 sm:p-6 md:p-8 lg:p-10">
+      <div className="flex flex-col md:flex-row bg-stone-300 shadow-lg rounded-lg overflow-hidden w-full max-w-4xl">
         {/* Image Section */}
         <div className="md:w-2/3 p-6 flex justify-center items-center">
           <img
             src={PowermangeUser}
             alt="Login Illustration"
-            className="w-full max-w-lg object-contain"
+            className=" w-40 max-w-lg object-contain"
           />
         </div>
 
@@ -112,6 +126,10 @@ export const Login = () => {
               Login
             </button>
           </form>
+
+          <div className="text-black" onClick={handleRegisterSuperAdmin}> 
+            super admin register
+          </div>
 
 
 
