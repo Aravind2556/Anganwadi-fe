@@ -57,9 +57,9 @@ export const Login = () => {
     }
   }
 
-  const handleRegisterSuperAdmin = () => {
-    window.location.href='/Register'
-  }
+  // const handleRegisterSuperAdmin = () => {
+  //   window.location.href='/Register'
+  // }
 
   return (
    
@@ -127,9 +127,9 @@ export const Login = () => {
             </button>
           </form>
 
-          <div className="text-black" onClick={handleRegisterSuperAdmin}> 
+          {/* <div className="text-black" onClick={handleRegisterSuperAdmin}> 
             super admin register
-          </div>
+          </div> */}
 
 
 
