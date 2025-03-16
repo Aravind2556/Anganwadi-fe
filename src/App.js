@@ -6,13 +6,14 @@ import Navbar from './components/Navbar'
 import { DContext } from './context/Datacontext'
 import CreateAdmin from './components/SuperAdmin/CreateAdmin'
 import CreateUser from './components/Admin/CreateUser'
-import { UserDashBoard } from './components/Admin/UserDashBoard'
+import  UserDashBoard  from './components/Admin/UserDashBoard'
 import StudentDashboard from './components/StudentDashboard'
 import Register from './components/createAccount/Register'
 
 
 export const App = () => {
   const { Auth } = useContext(DContext)
+
 
   return (
     <div>
