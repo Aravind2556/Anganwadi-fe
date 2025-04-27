@@ -203,201 +203,156 @@
 import React, { useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 
-
 const UserDashBoard = () => {
-
   const [feeds, setFeeds] = useState([]);
-  console.log("feeds", feeds);
- 
 
   useEffect(() => {
-   
-  
-    // const urls = [
-    //   'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
-    //   'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
-    // ];
-
     const urls = [
       'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
       'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
-    ]
-  
-    Promise.all(urls.map(url => fetch(url).then(res => res.json())))
-      .then((data) => {
-        console.log("API responses:", data);
-  
-        // Process API 1 with conversion logic for userId
-        const api1Data = data[0].feeds
-          .map(feed => {
-            if (!feed.field1) return null;
-            const parts = feed.field1.split(',');
-            if (parts.length < 3) return null;
-            let [userId, height, weight] = parts;
-            userId = userId.trim();
-  
-            // Conversion logic: if userId is "3E00F590BFE4", convert it to "VCEW1"
-            if (userId === "3E00F590BFE4") {
-              userId = "VCEW1";
-            }
+    ];
 
-            if(userId === "190060B2C902"){
-              userId = "VCEW2"
-            }
-  
+    Promise.all(urls.map(u => fetch(u).then(r => r.json())))
+      .then(([api1, api2]) => {
+        // API1: expect field1 = "userId,in,out,height,weight"
+        const api1Data = api1.feeds
+          .map(f => {
+            if (!f.field1) return null;
+            const parts = f.field1.split(',');
+            if (parts.length < 5) return null;
+            let [uid, i, o, h, w] = parts.map(p => p.trim());
+
+            // convert raw IDs
+            if (uid === '3E00F590BFE4') uid = 'VCEW1';
+            if (uid === '190060B2C902') uid = 'VCEW2';
+
             return {
-              created_at: feed.created_at,
-              userId: userId,
-              height: parseFloat(height),
-              weight: parseFloat(weight)
+              created_at: f.created_at,
+              userId:    uid,
+              in:        parseFloat(i) || 0,
+              out:       parseFloat(o) || 0,
+              height:    parseFloat(h) || 0,
+              weight:    parseFloat(w) || 0,
             };
           })
-          .filter(item => item !== null);
-  
-     
-  
-        // Process API 2: heartRate and spo2 data
-        const api2Data = data[1].feeds.map(feed => ({
-          created_at: feed.created_at,
-          heartRate: parseFloat(feed.field1) || 0,
-          spo2: parseFloat(feed.field2) || 0,
-        }));
-        console.log("API2 data:", api2Data);
-  
-// Combine data based on index using map (assuming both arrays are equal)
-const combinedFeeds = api1Data.map((feed, index) => ({
-  created_at: feed.created_at,
-  userId: feed.userId,
-  height: feed.height,
-  weight: feed.weight,
-  heartRate: api2Data[index].heartRate,
-  spo2: api2Data[index].spo2,
-}));
+          .filter(x => x);
 
-console.log("Combined data:", combinedFeeds);
-  
-        setFeeds(combinedFeeds);
+        // API2: heartRate + spo2
+        const api2Data = api2.feeds.map(f => ({
+          created_at: f.created_at,
+          heartRate:  parseFloat(f.field1) || 0,
+          spo2:       parseFloat(f.field2) || 0,
+        }));
+
+        // merge by index
+        const combined = api1Data.map((f, idx) => ({
+          ...f,
+          heartRate: api2Data[idx]?.heartRate ?? 0,
+          spo2:      api2Data[idx]?.spo2 ?? 0,
+        }));
+
+        setFeeds(combined);
       })
-      .catch((error) => console.error("Error fetching data:", error));
+      .catch(console.error);
   }, []);
-  
-  if (feeds.length === 0) {
-    return <div>Loading...</div>;
-  }
-  
-  // Generate chart data arrays from the combined feeds
-  const weightData = [];
-  const heightData = [];
-  const heartRateData = [];
-  const spo2Data = [];
-  console.log("spo2",spo2Data)
-  
-  
-  feeds.forEach(feed => {
-    const time = feed.created_at ? new Date(feed.created_at).getTime() : null;
-    if (!time) return;
-    weightData.push({ x: time, y: feed.weight });
-    heightData.push({ x: time, y: feed.height });
-    heartRateData.push({ x: time, y: feed.heartRate });
-    spo2Data.push({ x: time, y: feed.spo2 });
-  });
-  
-  // Sort each array by time (ascending)
-  weightData.sort((a, b) => a.x - b.x);
-  heightData.sort((a, b) => a.x - b.x);
-  heartRateData.sort((a, b) => a.x - b.x);
-  spo2Data.sort((a, b) => a.x - b.x);
-  
+
+  if (!feeds.length) return <div>Loading...</div>;
+
+  // build & sort each series
+  const mkSeries = (key) =>
+    feeds
+      .map(f => ({ x: new Date(f.created_at).getTime(), y: f[key] }))
+      .sort((a, b) => a.x - b.x);
+
+  const inData        = mkSeries('in');
+  const outData       = mkSeries('out');
+  const weightData    = mkSeries('weight');
+  const heightData    = mkSeries('height');
+  const heartRateData = mkSeries('heartRate');
+  const spo2Data      = mkSeries('spo2');
+
+  // only last 5 points
+  const recentIn        = inData.slice(-5);
+  const recentOut       = outData.slice(-5);
+  const recentWeight    = weightData.slice(-5);
+  const recentHeight    = heightData.slice(-5);
+  const recentHeartRate = heartRateData.slice(-5);
+  const recentSpo2      = spo2Data.slice(-5);
+
   const commonOptions = {
     chart: { type: 'line', zoom: { enabled: true } },
-    stroke: {
-      curve: 'smooth',
-      width: 1,
-    },
-    colors: ['#FF5733'],
+    stroke: { curve: 'smooth', width: 1 },
     xaxis: { type: 'datetime' },
   };
-  
-  const charts = [
-    {
-      title: 'Weight Over Time',
-      series: [{ name: 'Weight', data: weightData }],
-      options: { ...commonOptions, title: { text: 'Weight ' } }
-    },
-    {
-      title: 'Height Over Time',
-      series: [{ name: 'Height', data: heightData }],
-      options: { ...commonOptions, title: { text: 'Height' } }
-    },
-    {
-      title: 'Heart Rate Over Time',
-      series: [{ name: 'Heart Rate', data: heartRateData }],
-      options: { ...commonOptions, title: { text: 'Heart Rate ' } }
-    },
-    {
-      title: 'SPO2 Over Time',
-      series: [{ name: 'SPO2', data: spo2Data }],
-      options: { ...commonOptions, title: { text: 'SPO2 ' } }
-      
-    }
-  ];
-  
-  return (
-    <div className="container mx-auto p-4">
-    <h1 className="text-xl font-bold mb-4">Users Dashboard</h1>
-          <div className="mt-8">
-        <div className="w-full p-10 justify-center   bg-stone-300 h-full rounded-2xl">
-        <h2 className="text-xl font-bold mb-4">Health Charts</h2>
-          {charts.map((chartConfig, index) => (
-            <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
-              <Chart
-                options={chartConfig.options}
-                series={chartConfig.series}
-                type="line"
-                height={350}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-      <h1 className="text-2xl font-bold mb-4">Users Table</h1>
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 p-2">S.No</th>
-              <th className="border border-gray-300 p-2">User ID</th>
-              <th className="border border-gray-300 p-2">Weight</th>
-              <th className="border border-gray-300 p-2">Hight</th>
-              <th className="border border-gray-300 p-2">Spo2</th>
-              <th className="border border-gray-300 p-2">Heart Rate</th>
-              <th className="border border-gray-300 p-2 hidden">Attendance</th>
-              <th className="border border-gray-300 p-2 hidden md:table-cell">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {feeds.reverse().map((entry, index) => {
-              const time = entry.created_at ? new Date(entry.created_at).toLocaleString() : "N/A";
-              return (
-                <tr key={index} className="text-center">
-                  <td className="border border-gray-300 p-2">{index + 1}</td>
-                  <td className="border border-gray-300 p-2">{entry.userId}</td>
-                  <td className="border border-gray-300 p-2">{entry.weight}</td>
-                  <td className="border border-gray-300 p-2">{entry.height}</td>
-                  <td className="border border-gray-300 p-2">{entry.spo2}</td>
-                  <td className="border border-gray-300 p-2">{entry.heartRate}</td>
-                  <td className="border border-gray-300 p-2 hidden">N/A</td>
-                  <td className="border border-gray-300 p-2 hidden md:table-cell">{time}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
 
+  const charts = [
+    { title: 'IN ',        series: [{ name: 'In',    data: recentIn }],        options: commonOptions },
+    { title: 'OUT',       series: [{ name: 'Out',   data: recentOut }],       options: commonOptions },
+    { title: 'Weight',    series: [{ name: 'Weight',data: recentWeight }],   options: commonOptions },
+    { title: 'Height',    series: [{ name: 'Height',data: recentHeight }],   options: commonOptions },
+    { title: 'Heart Rate',series: [{ name: 'HR',    data: recentHeartRate }],options: commonOptions },
+    { title: 'SPO2',      series: [{ name: 'SpO2',  data: recentSpo2 }],     options: commonOptions },
+  ];
+
+  // table: last 5 records, newest-first
+  const latestFive = [...feeds]
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    .slice(-5)
+    .reverse();
+
+  return (
+    <div className="container mx-auto p-10">
+      <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
+
+      {/* Charts */}
+      <section className="grid gap-4 p-10 bg-stone-300 rounded mb-8">
+      <h2 className="text-xl font-bold mb-4">Users Chart</h2>
+        {charts.map((cfg, i) => (
+          <div key={i} className="bg-white w-full p-5 flex rounded-xl shadow">
+            <h2 className="text-lg font-semibold mb-2">{cfg.title}</h2>
+            <Chart
+              options={cfg.options}
+              series={cfg.series}
+              type="line"
+              height={250}
+              className="w-full"
+             
+            />
+          </div>
+        ))}
+      </section>
+
+      {/* Table */}
+      <section>
+        <h2 className="text-xl font-bold mb-4">Users Data </h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-300">
+            <thead className="bg-gray-200">
+              <tr>
+                {['S.No','User ID','In','Out','Weight','Height','SpO2','Heart Rate','Time']
+                  .map((h, i) => <th key={i} className="border p-2">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {latestFive.map((r, i) => (
+                <tr key={i} className="text-center">
+                  <td className="border p-2">{i+1}</td>
+                  <td className="border p-2">{r.userId}</td>
+                  <td className="border p-2">{r.in}</td>
+                  <td className="border p-2">{r.out}</td>
+                  <td className="border p-2">{r.weight}</td>
+                  <td className="border p-2">{r.height}</td>
+                  <td className="border p-2">{r.spo2}</td>
+                  <td className="border p-2">{r.heartRate}</td>
+                  <td className="border p-2">{new Date(r.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 };
 
 export default UserDashBoard;
-
