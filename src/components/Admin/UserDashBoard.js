@@ -213,10 +213,15 @@ const UserDashBoard = () => {
   useEffect(() => {
    
   
+    // const urls = [
+    //   'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
+    //   'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
+    // ];
+
     const urls = [
       'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
       'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
-    ];
+    ]
   
     Promise.all(urls.map(url => fetch(url).then(res => res.json())))
       .then((data) => {
@@ -235,6 +240,10 @@ const UserDashBoard = () => {
             if (userId === "3E00F590BFE4") {
               userId = "VCEW1";
             }
+
+            if(userId === "190060B2C902"){
+              userId = "VCEW2"
+            }
   
             return {
               created_at: feed.created_at,
@@ -245,7 +254,7 @@ const UserDashBoard = () => {
           })
           .filter(item => item !== null);
   
-        console.log("Processed API1 data:", api1Data);
+     
   
         // Process API 2: heartRate and spo2 data
         const api2Data = data[1].feeds.map(feed => ({
@@ -335,7 +344,23 @@ console.log("Combined data:", combinedFeeds);
   
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
+    <h1 className="text-xl font-bold mb-4">Users Dashboard</h1>
+          <div className="mt-8">
+        <div className="w-full p-10 justify-center   bg-stone-300 h-full rounded-2xl">
+        <h2 className="text-xl font-bold mb-4">Health Charts</h2>
+          {charts.map((chartConfig, index) => (
+            <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
+              <Chart
+                options={chartConfig.options}
+                series={chartConfig.series}
+                type="line"
+                height={350}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <h1 className="text-2xl font-bold mb-4">Users Table</h1>
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
@@ -351,7 +376,7 @@ console.log("Combined data:", combinedFeeds);
             </tr>
           </thead>
           <tbody>
-            {feeds.map((entry, index) => {
+            {feeds.reverse().map((entry, index) => {
               const time = entry.created_at ? new Date(entry.created_at).toLocaleString() : "N/A";
               return (
                 <tr key={index} className="text-center">
@@ -369,21 +394,7 @@ console.log("Combined data:", combinedFeeds);
           </tbody>
         </table>
       </div>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Health Charts</h2>
-        <div className="w-full p-36   justify-center   bg-stone-300 h-full rounded-2xl">
-          {charts.map((chartConfig, index) => (
-            <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
-              <Chart
-                options={chartConfig.options}
-                series={chartConfig.series}
-                type="line"
-                height={350}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 };

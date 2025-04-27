@@ -340,6 +340,192 @@
 
 
 
+// import React, { useEffect, useState, useContext } from 'react';
+// import Chart from 'react-apexcharts';
+// import { DContext } from '../context/Datacontext';
+
+// const StudentDashboard = () => {
+//   const { Auth } = useContext(DContext);
+//   const loggedInStudentId = Auth?.studentId;
+//   const [feeds, setFeeds] = useState([]);
+//   console.log("feeds", feeds);
+//   console.log("Auth", Auth);
+
+//   useEffect(() => {
+//     if (!loggedInStudentId) return;
+  
+//     const urls = [
+//       'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
+//       'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
+//     ];
+  
+//     Promise.all(urls.map(url => fetch(url).then(res => res.json())))
+//       .then((data) => {
+//         console.log("API responses:", data);
+  
+//         // Process API 1 with conversion logic for userId
+//         const api1Data = data.slice(-1)[0].feeds
+//           .map(feed => {
+//             if (!feed.field1) return null;
+//             const parts = feed.field1.split(',');
+//             if (parts.length < 3) return null;
+//             let [userId, height, weight] = parts;
+//             userId = userId.trim();
+  
+//             // Conversion logic: if userId is "3E00F590BFE4", convert it to "VCEW1"
+//             if (userId === "3E00F590BFE4") {
+//               userId = "VCEW1";
+//             }
+  
+//             return {
+//               created_at: feed.created_at,
+//               userId: userId,
+//               height: parseFloat(height),
+//               weight: parseFloat(weight)
+//             };
+//           })
+//           .filter(item => item !== null);
+  
+//         console.log("Processed API1 data:", api1Data);
+  
+//         // Process API 2: heartRate and spo2 data
+//         const api2Data = data[1].feeds.map(feed => ({
+//           created_at: feed.created_at,
+//           heartRate: parseFloat(feed.field1) || 0,
+//           spo2: parseFloat(feed.field2) || 0,
+//         }));
+//         console.log("API2 data:", api2Data);
+  
+// // Combine data based on index using map (assuming both arrays are equal)
+// const combinedFeeds = api1Data.map((feed, index) => ({
+//   created_at: feed.created_at,
+//   userId: feed.userId,
+//   height: feed.height,
+//   weight: feed.weight,
+//   heartRate: api2Data[index].heartRate,
+//   spo2: api2Data[index].spo2,
+// }));
+
+// console.log("Combined data:", combinedFeeds);
+  
+//         setFeeds(combinedFeeds);
+//       })
+//       .catch((error) => console.error("Error fetching data:", error));
+//   }, [loggedInStudentId]);
+  
+//   if (feeds.length === 0) {
+//     return <div>Loading...</div>;
+//   }
+  
+//   // Generate chart data arrays from the combined feeds
+//   const weightData = [];
+//   const heightData = [];
+//   const heartRateData = [];
+//   const spo2Data = [];
+//   console.log("spo2",spo2Data)
+  
+  
+//   feeds.forEach(feed => {
+//     const time = feed.created_at ? new Date(feed.created_at).getTime() : null;
+//     if (!time) return;
+//     weightData.push({ x: time, y: feed.weight });
+//     heightData.push({ x: time, y: feed.height });
+//     heartRateData.push({ x: time, y: feed.heartRate });
+//     spo2Data.push({ x: time, y: feed.spo2 });
+//   });
+  
+//   // Sort each array by time (ascending)
+//   weightData.sort((a, b) => a.x - b.x);
+//   heightData.sort((a, b) => a.x - b.x);
+//   heartRateData.sort((a, b) => a.x - b.x);
+//   spo2Data.sort((a, b) => a.x - b.x);
+  
+//   const commonOptions = {
+//     chart: { type: 'line', zoom: { enabled: true } },
+//     stroke: {
+//       curve: 'smooth',
+//       width: 1,
+//     },
+//     colors: ['#FF5733'],
+//     xaxis: { type: 'datetime' },
+//   };
+  
+//   const charts = [
+//     {
+//       title: 'Weight Over Time',
+//       series: [{ name: 'Weight', data: weightData }],
+//       options: { ...commonOptions, title: { text: 'Weight ' } }
+//     },
+//     {
+//       title: 'Height Over Time',
+//       series: [{ name: 'Height', data: heightData }],
+//       options: { ...commonOptions, title: { text: 'Height' } }
+//     },
+//     {
+//       title: 'Heart Rate Over Time',
+//       series: [{ name: 'Heart Rate', data: heartRateData }],
+//       options: { ...commonOptions, title: { text: 'Heart Rate ' } }
+//     },
+//     {
+//       title: 'SPO2 Over Time',
+//       series: [{ name: 'SPO2', data: spo2Data }],
+//       options: { ...commonOptions, title: { text: 'SPO2 ' } }
+      
+//     }
+//   ];
+  
+//   return (
+//     <div className="container mx-auto p-4">
+//       <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
+//       <div className="overflow-x-auto">
+//         <table className="min-w-full border-collapse border border-gray-300">
+//           <thead>
+//             <tr className="bg-gray-200">
+//               <th className="border border-gray-300 p-2">S.No</th>
+//               <th className="border border-gray-300 p-2">User ID</th>
+//               <th className="border border-gray-300 p-2 hidden">Attendance</th>
+//               <th className="border border-gray-300 p-2 hidden md:table-cell">Time</th>
+//             </tr>
+//           </thead>
+//           <tbody>
+//             {feeds.map((entry, index) => {
+//               const time = entry.created_at ? new Date(entry.created_at).toLocaleString() : "N/A";
+//               return (
+//                 <tr key={index} className="text-center">
+//                   <td className="border border-gray-300 p-2">{index + 1}</td>
+//                   <td className="border border-gray-300 p-2">{Auth.fullname}</td>
+//                   <td className="border border-gray-300 p-2 hidden">N/A</td>
+//                   <td className="border border-gray-300 p-2 hidden md:table-cell">{time}</td>
+//                 </tr>
+//               );
+//             })}
+//           </tbody>
+//         </table>
+//       </div>
+//       <div className="mt-8">
+//         <h2 className="text-xl font-bold mb-4">Health Charts</h2>
+//         <div className="w-full p-36   justify-center   bg-stone-300 h-full rounded-2xl">
+//           {charts.map((chartConfig, index) => (
+//             <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
+//               <Chart
+//                 options={chartConfig.options}
+//                 series={chartConfig.series}
+//                 type="line"
+//                 height={350}
+//               />
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default StudentDashboard;
+
+
+
+
 import React, { useEffect, useState, useContext } from 'react';
 import Chart from 'react-apexcharts';
 import { DContext } from '../context/Datacontext';
@@ -354,10 +540,17 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!loggedInStudentId) return;
   
+    // const urls = [
+    //   'https://api.thingspeak.com/channels/2882706/feeds.json?api_key=KAN8AW985WEAC67C',
+    //   'https://api.thingspeak.com/channels/2882687/feeds.json?api_key=5VRF9US8H9VNADEF',
+    // ];
+
     const urls = [
       'https://api.thingspeak.com/channels/2877835/feeds.json?api_key=X6W35RACSZEL05QJ',
       'https://api.thingspeak.com/channels/2877948/feeds.json?api_key=M2YJQIMB0OZ3MJ8U',
-    ];
+    ]
+
+    
   
     Promise.all(urls.map(url => fetch(url).then(res => res.json())))
       .then((data) => {
@@ -376,6 +569,12 @@ const StudentDashboard = () => {
             if (userId === "3E00F590BFE4") {
               userId = "VCEW1";
             }
+            else if(userId === "190060B2C902"){
+              userId = "VCEW2"
+            }
+            
+
+
   
             return {
               created_at: feed.created_at,
@@ -476,7 +675,24 @@ console.log("Combined data:", combinedFeeds);
   
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">User Dashboard</h1>
+     <h1 className="text-xl font-bold mb-4">User Dashboard</h1>
+          <div className="mt-8">
+       
+        <div className="w-full p-10  justify-center   bg-stone-300 h-full rounded-2xl">
+        <h2 className="text-xl font-bold mb-4">Health Charts</h2>
+          {charts.map((chartConfig, index) => (
+            <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
+              <Chart
+                options={chartConfig.options}
+                series={chartConfig.series}
+                type="line"
+                height={350}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+      <h1 className="text-2xl font-bold mb-4">Users Table</h1>
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-300">
           <thead>
@@ -502,26 +718,13 @@ console.log("Combined data:", combinedFeeds);
           </tbody>
         </table>
       </div>
-      <div className="mt-8">
-        <h2 className="text-xl font-bold mb-4">Health Charts</h2>
-        <div className="w-full p-36   justify-center   bg-stone-300 h-full rounded-2xl">
-          {charts.map((chartConfig, index) => (
-            <div key={index} className="sm:w-full md:w-full lg:w-full px-2 mb-4 bg-white rounded-xl">
-              <Chart
-                options={chartConfig.options}
-                series={chartConfig.series}
-                type="line"
-                height={350}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 };
 
 export default StudentDashboard;
+
 
 
 
